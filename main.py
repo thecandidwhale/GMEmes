@@ -73,4 +73,4 @@ def hello_pubsub(event, context):
     """
     main()
 
-#checkStock()
+#main()
