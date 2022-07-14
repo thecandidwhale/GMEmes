@@ -1,4 +1,5 @@
 import os
+import base64
 
 import finnhub
 from twilio.rest import Client
@@ -14,6 +15,11 @@ o: Open price of the day
 pc: Previous close price
 """
 
+account_sid = os.environ['TWILIO_ACCOUNT_SID']
+auth_token = os.environ['TWILIO_AUTH_TOKEN'] 
+client = Client(account_sid, auth_token)
+messaging_service_sid='MG5eac5682678685d33bce1161ad5bc30f'
+
 
 
 def getGMEprice():
@@ -22,16 +28,13 @@ def getGMEprice():
     return quote
 
 
-def send_message(price):
-    account_sid = os.environ['TWILIO_ACCOUNT_SID']
-    auth_token = os.environ['TWILIO_AUTH_TOKEN'] 
-    client = Client(account_sid, auth_token)
+def send_down_message(price):
     price = price
     distanceFrom = 1000 - float(price["c"])
-    toSend = 'The price of GME went down by {}% and is now is: ${}. That is ${} away from $1000 >:)'.format(price["dp"], price["c"], distanceFrom)
+    toSend = 'The price of GME went down by {}% and is now: ${}. That is still ${} away from $1000 >:)'.format(price["dp"], price["c"], distanceFrom)
 
     message = client.messages.create(  
-                                messaging_service_sid='MG5eac5682678685d33bce1161ad5bc30f', 
+                                messaging_service_sid=messaging_service_sid, 
                                 body=toSend,
                                 from_='+12513251057',      
                                 to='+19166275849' 
@@ -39,11 +42,35 @@ def send_message(price):
     
     print(message.sid)
 
-def checkStock():
+def send_up_message(price):
+    price = price
+    distanceFrom = 1000 - float(price["c"])
+    toSend = 'The price of GME went up by {}% (booo!) and is now: ${}. That is still ${} away from $1000 >:)'.format(price["dp"], price["c"], distanceFrom)
+
+    message = client.messages.create(  
+                                messaging_service_sid=messaging_service_sid, 
+                                body=toSend,
+                                from_='+12513251057',      
+                                to=os.environ['RK_PHONE']
+                            )
+    
+    print(message.sid)
+
+def main():
     price = getGMEprice()
     if price["dp"] < 0:
-        send_message(price)
+        send_down_message(price)
     else:
-        print("Price went up; no message sent.")
+        send_up_message(price)
 
-checkStock()
+
+
+def hello_pubsub(event, context):
+    """Triggered from a message on a Cloud Pub/Sub topic.
+    Args:
+         event (dict): Event payload.
+         context (google.cloud.functions.Context): Metadata for the event.
+    """
+    main()
+
+#checkStock()
