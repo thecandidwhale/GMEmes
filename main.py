@@ -37,7 +37,7 @@ def send_down_message(price):
                                 messaging_service_sid=messaging_service_sid, 
                                 body=toSend,
                                 from_='+12513251057',      
-                                to='+19166275849' 
+                                to=os.environ['RK_PHONE'] 
                             )
     
     print(message.sid)
